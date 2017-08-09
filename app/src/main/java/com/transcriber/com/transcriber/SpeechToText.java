@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Environment;
 import android.speech.RecognizerIntent;
@@ -16,15 +17,29 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.transcriber.com.transcriber.data.DBHelper;
+
+
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.logging.Handler;
 
 
 public class SpeechToText extends AppCompatActivity {
@@ -34,6 +49,11 @@ public class SpeechToText extends AppCompatActivity {
 
     public static StringBuilder tempTextResult;
     private ImageButton btnSpeak;
+
+    private TextView titleText;
+    private Button bSave;
+    private Spinner spin;
+
     private TextView txtText;
     private Long tempFileNameLong;
     final private String audioFileExtension = ".mp3";
@@ -54,10 +74,18 @@ public class SpeechToText extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_speech_to_text);
 
+        titleText = (EditText) findViewById(R.id.titleText);
+
         txtText = (TextView) findViewById(R.id.txtText);
+        bSave  = (Button) findViewById(R.id.save);
+
+        spin = (Spinner) findViewById(R.id.sCategory);
+
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.selectedCategory, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spin.setAdapter(adapter);
         btnSpeak = (ImageButton) findViewById(R.id.btnSpeak);
         tempTextResult = new StringBuilder();
-
 
        /* //RECYCLERVIEW
         mRecyclerView. findViewById(R.id.recyclerView); //link to activity_main.xml
@@ -76,7 +104,33 @@ public class SpeechToText extends AppCompatActivity {
             }
         });
 
+
+        bSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                DBHelper helper = new DBHelper(getBaseContext());
+
+                String title = titleText.getText().toString();
+                String text = txtText.getText().toString();
+                String categoy = spin.getSelectedItem().toString();
+
+                helper.insertItem(title, text, categoy);
+
+                Toast t = Toast.makeText(getApplicationContext(),
+                        "Your Transcription Has Been Added", Toast.LENGTH_LONG);
+                t.show();
+
+                Intent intent = new Intent(getBaseContext(), MainActivity.class);
+                startActivity(intent);
+
+
+            }
+        });
     }
+
+
+
     // when the speak button is clicked
     public void speakButtonOnClick(View view) {
         Log.i(TAG, "Record Button Touched");
@@ -143,10 +197,10 @@ public class SpeechToText extends AppCompatActivity {
                     ArrayList<String> textOutput = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
 
                     // Set the directory for the audio
-                    String audio_dir = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Audio";
+                    String audio_dir = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "ProjectCS5540/Transcriber-AndroidApp/Audio";
 
                     //Set the directory for the text
-                    String text_dir = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Text";
+                    String text_dir = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "/ProjectCS5540/Transcriber-AndroidApp/Text";
 
                     // get text; delete any data in tempText first
                     tempTextResult.delete(0, tempTextResult.length());
